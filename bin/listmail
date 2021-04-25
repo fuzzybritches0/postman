@@ -1,0 +1,94 @@
+#!/bin/bash
+
+mailfolder="${HOME}/Mail"
+#fromTag='"Max Muster" <maxmuster88@gmail.com'
+
+emaila() {
+	all="${@}"
+	begin=0
+	for i in $( seq 1 ${#all} ); do
+		(( ii = i - 1 ))
+		if [ "${all:${ii}:1}" == ">" ]; then
+			[ "${i}" -lt "${#all}" ] && echo ","
+			begin=0
+		fi
+		[ "${begin}" -eq "1" ] && echo -n "${all:${ii}:1}"
+		[ "${all:${ii}:1}" == "<" ] && begin=1
+	done
+	echo
+}
+
+reply() {
+	message=0
+        while read line; do
+		proc="${line,,}"
+		[ "${proc:0:8}"  == "subject:" ] && echo "${line}"
+		if [ "${proc:0:3}"  == "to:" ] && [ ! "${to}" ]; then
+			to="${line:3}"
+			[ ! "${fromTag}" ] && echo "From:${to}"
+			[ "${fromTag}" ] && echo "From:${fromTag}"
+		fi
+		[ "${proc:0:5}"  == "date:" ] && [ ! "${date}" ] && date="${line:5}" && echo -n "Date: " && date -R
+		[ "${proc:0:5}"  == "from:" ] && [ ! "${from}" ] && from="${line:5}" && \
+			echo -n "To: " && emaila ${from} 
+		[ "${proc:0:3}"  == "cc:" ] && [ ! "${cc}" ] && cc="${line:3}" && \
+						echo -n "Cc: " && emaila ${cc} 
+		[ "${proc:0:11}"  == "message-id:" ] && [ ! "${mid}" ] && mid="${line:11}" && \
+			echo "In-Reply-To: ${mid}" && \
+			echo "Message-Id: <${RANDOM}-${RANDOM}-${USER}@${HOSTNAME}>"
+		[ "${message}" -eq "0" ] && [ "${#line}" -le "1" ] && message=1 && \
+			echo && echo && echo "On ${date} ${from} wrote:"
+		[ "${message}" -eq "1" ] && echo "> ${line}"
+        done
+}
+
+process_head() {
+	while read line; do
+		proc="${line,,}"
+        	last="${#proc}"
+		[ "${proc:0:5}"  == "date:" ] && [ ! "${date}" ] && date="${line:5}"
+        	[ "${proc:0:5}"  == "from:" ] && [ ! "${from}" ] && from="${line:5}"
+        	[ "${proc:0:8}"  == "subject:" ] && [ ! "${subject}" ] && subject="${line:8}"
+	done
+	echo "::: $( echo ${subject} | sed 's/\r$//' )"
+	echo "$( echo ${from} | sed 's/\r$//' ) ::: $( echo ${date} | sed 's/\r$//' )"
+	echo
+}
+
+if [ "$( basename ${0} )" == "getmail" ]; then
+	cd "${mailfolder}" && fetchmail -s -K -r Inbox || exit ${?}
+	listmail ./new
+	echo
+	exit 0
+fi
+
+[ ! "${1}" ] || [ ! -d "${1}" ] && echo "no valid mail folder!" && exit 1
+
+count=0
+for file in ${1}/*; do
+	if [ "${file}" != "${1}/*" ]; then
+		if [ "$( basename ${0} )" == "readmail" ] && [ "${count}" -eq "${2}" ]; then
+			vim -R ${file}
+			exit 0
+		elif [ "$( basename ${0} )" == "rmmail" ] && [ "${count}" -eq "${2}" ]; then
+			rm ${file}
+			exit 0
+		elif [ "$( basename ${0} )" == "replymail" ] && [ "${count}" -eq "${2}" ]; then
+			filere="${file/.eml}_reply.eml"
+			filere="$( basename "${filere}" )"
+			filere="${mailfolder}/draft/${filere}"
+			cat "${file}" | reply > "${filere}"
+			vim "${filere}"
+			sendmail "${filere}"
+			exit 0
+		elif [ "$( basename ${0} )" == "listmail" ] && [ ! -d "${file}" ]; then
+			echo -n "${count} "
+			cat "${file}" | parsemailhead | process_head "${count}"
+		elif [ -d "${file}" ]; then
+			echo "DIRECTORY: ${file}"
+		fi
+		(( count++ ))
+	fi
+done
+
+[ "$( basename ${0} )" == "countmail" ] && echo "${count}"

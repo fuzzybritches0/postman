@@ -1,0 +1,65 @@
+############ SETUP ############
+
+Place the files in the bin folder in the way of your $PATH. Then go to the
+folder where you placed them and do:
+
+$ ln -s listmail countmail
+$ ln -s listmail getmail
+$ ln -s listmail readmail
+$ ln -s listmail replymail
+$ ln -s listmail rmmmail
+$ mkdir ~/Mail
+
+Change the line in listmail beginning with 'fromTag=' so it reads your name and
+email address and uncomment it, or you will get surprised when you reply to
+emails with more than one recipient.
+
+The executable called postman can be adopted to sort mail into different
+directories. Adopt it to your needs.
+
+Next install fetchmail and msmtp.
+
+$ sudo apt install fetchmail msmtp
+
+Next create the file ~/.fetchmailrc with the following content:
+------------------------------------------
+defaults
+no rewrite
+poll imap.gmail.com port 993 protocol IMAP
+user YOUR_USER_NAME@gmail.com
+password YOUR_SECRET_PASSWORD
+ssl
+smtphost smtp.gmail.com/465
+mda postman
+------------------------------------------
+
+Then create the file ~/.msmtprc with the following content:
+------------------------------------------
+defaults
+auth on
+tls on
+
+account THIS_ACCOUNT_NAME
+host smtp.gmail.com
+port 587
+from YOUR_USER_NAME@gmail.com
+user YOUR_USER_NAME@gmail.com
+password YOUR_SECRET_PASSWORD
+
+account default: THIS_ACCOUNT_NAME
+------------------------------------------
+
+# retrieve mail
+$ getmail
+
+# list mail in folder
+$ listmail ~/Mail/new
+$ listmail ~/Mail/inbox
+$ listmail ~/Mail/sent
+
+# read mail
+$ readmail ~/Mail/new NUMBER_OF_MAIL
+
+# reply to mail
+$ replymail ~/Mail/new NUMBER_OF_MAIL
+

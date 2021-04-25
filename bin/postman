@@ -1,0 +1,91 @@
+#!/bin/bash
+
+[ ! -d "./inbox" ] && mkdir -p "./inbox"
+[ ! -d "./sent" ] && mkdir -p "./sent"
+[ ! -d "./draft" ] && mkdir -p "./draft"
+
+sortmail() {
+	dir="inbox"
+	subject="${1}"
+	from="${2}"
+	to="${3}"
+	cc="${4}"
+	maildir="${5}"
+	# The following two lines demonstrate how to filter incoming mail into
+	# different directories.
+	#[ "$( echo "${subject,,}" | grep "linux fan club" )" ] && dir="linux-fan-club"
+	#[ "$( echo "${from,,}" | grep "max.maier@gmail.com" )" ] && dir="max_maier"
+	echo "${dir}"
+}
+
+
+find_email() {
+	for word in ${1}; do
+		if [ "${word/@}" != "${word}" ]; then
+			word="${word/<}"
+			word="${word/>}"
+			echo "${word}"
+			found=1
+			break
+		fi
+	done
+	[ ! "${found}" ] && echo "UNKNOWN-${num}"
+}
+
+tofilen() {
+	subject="${1,,}"
+	subject="${subject// /_}"
+	subject="${subject//!}"
+	subject="${subject//&}"
+	subject="${subject//$}"
+	subject="${subject//\*}"
+	subject="${subject//\\}"
+	subject="${subject//\(}"
+	subject="${subject//\)}"
+	subject="${subject//\{}"
+	subject="${subject//\}}"
+	subject="${subject//;}"
+	subject="${subject//\'}"
+	subject="${subject//\"}"
+	subject="${subject//\`}"
+	subject="${subject//~}"
+	subject="${subject///}"
+	echo "${subject}"
+}
+
+save_mail() {
+	mail="${1}"
+	name="${2}"
+	directory="${3}"
+	count="${4}"
+	if [ -f "./${directory}/${name}_${count}.eml" ]; then
+		(( count++ ))
+		save_mail "${mail}" "${name}" "${directory}" "${count}" "${ctype}"
+	fi
+	mv "${mail}" "./${directory}/${name}_${count}.eml"
+	ln -s "../${directory}/${name}_${count}.eml" "./new/${name}_${count}.eml"
+	exit 0
+}
+
+num=${RANDOM}${RANDOM}
+num=$(printf "%x" "${num}")
+mail="./inbox/${num}"
+while read line; do
+	echo "${line}" >> "${mail}" || exit 1
+	proc="${line,,}"
+	[ "${proc:0:3}"  == "to:" ] && to="${line:3}"
+	[ "${proc:0:3}"  == "cc:" ] && cc="${line:3}"
+	[ "${proc:0:5}"  == "date:" ] && date="${line:5}"
+	[ "${proc:0:5}"  == "from:" ] && from="${line:5}"
+	[ "${proc:0:8}"  == "subject:" ] && subject="${line:8}"
+done
+maildir="$(basename ${PWD})"
+directory="$(sortmail "${subject}" "${from}" "${to}" "${cc}" "${maildir}")"
+[ ! -d "./${directory}" ] && mkdir -p "./${directory}"
+date=$( date -d "${date}" +%Y-%m-%dT%H:%M:%S%:z || date +%Y-%m-%dT%H:%M:%S%:z )
+from=$( find_email "${from}" )
+subj=$( tofilen "${subject}" )
+name="${date}_${from}_${subj}"
+[ ! -d "./new" ] && mkdir ./new
+count=0
+save_mail "${mail}" "${name}" "${directory}" "${count}" "${ctype}"
