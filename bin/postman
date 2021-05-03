@@ -40,27 +40,6 @@ find_email() {
 	[ ! "${found}" ] && echo "UNKNOWN-${num}"
 }
 
-tofilen() {
-	subject="${1,,}"
-	subject="${subject// /_}"
-	subject="${subject//!}"
-	subject="${subject//&}"
-	subject="${subject//$}"
-	subject="${subject//\*}"
-	subject="${subject//\\}"
-	subject="${subject//\(}"
-	subject="${subject//\)}"
-	subject="${subject//\{}"
-	subject="${subject//\}}"
-	subject="${subject//;}"
-	subject="${subject//\'}"
-	subject="${subject//\"}"
-	subject="${subject//\`}"
-	subject="${subject//~}"
-	subject="${subject///}"
-	echo "${subject}"
-}
-
 save_mail() {
 	mail="${1}"
 	name="${2}"
@@ -79,7 +58,7 @@ num=${RANDOM}${RANDOM}
 mail="./inbox/${num}"
 pointer=
 head=1
-while IFS= read line; do
+while IFS="\n\r" read line; do
 	echo "${line}" >> "${mail}" || exit 1
 	if [ "${head}" == "1" ]; then
 		[ "${#line}"  -le "1" ] && head=

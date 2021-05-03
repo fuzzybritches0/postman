@@ -20,7 +20,7 @@ emaila() {
 
 reply() {
 	message=0
-        while IFS= read line; do
+        while IFS="\r\n" read line; do
 		[ "${line:0:8}"  == "Subject:" ] && echo "${line}"
 		if [ "${line:0:3}"  == "To:" ] && [ ! "${to}" ]; then
 			to="${line:3}"
@@ -44,7 +44,7 @@ reply() {
 process_head() {
 	pointer=
 	head=1
-	while IFS= read line; do
+	while IFS="\r\n" read line; do
 		if [ "${head}" == "1" ]; then
 			[ "${#line}"  -le "1" ] && head=
 			[ "${line:0:5}"  == "Date:" ] && header[0]="${line:5}" && pointer=0
@@ -53,8 +53,8 @@ process_head() {
 			[ "${line:0:1}"  == " " ] && header[${pointer}]="${header[${pointer}]}${line}"
 		fi
 	done
-	echo "::: $( echo ${header[2]} | sed 's/\r$//' )"
-	echo "$( echo ${header[1]} | sed 's/\r$//' ) ::: $( echo ${header[0]} | sed 's/\r$//' )"
+	echo "::: ${header[2]}"
+	echo "${header[1]} ::: ${header[0]}"
 	echo
 }
 
