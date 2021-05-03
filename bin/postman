@@ -5,6 +5,7 @@
 [ ! -d "./sent" ] && mkdir -p "./sent"
 [ ! -d "./draft" ] && mkdir -p "./draft"
 
+[ ! "$(which inline-detox)" ] && echo "detox is not installed! Try: apt-get install detox" && exit 1
 
 create_sort_sh() {
 
@@ -105,7 +106,7 @@ directory="$(sortmail)"
 [ ! -d "./${directory}" ] && mkdir -p "./${directory}"
 date=$(date -d "${date}" +%Y-%m-%dT%H:%M:%S%:z || date +%Y-%m-%dT%H:%M:%S%:z)
 from=$(find_email "${from}")
-subj=$(tofilen "${subject}")
+subj=$(echo "${subject}" | inline-detox)
 name="${date}_${from}_${subj}"
 [ ! -d "./new" ] && mkdir ./new
 count=0
