@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mailfolder="${HOME}/Mail"
-#fromTag='"Max Muster" <maxmuster88@gmail.com'
+#fromTag='"Max Muster" <maxmuster88@gmail.com>'
 
 emaila() {
 	all="${@}"

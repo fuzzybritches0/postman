@@ -1,20 +1,27 @@
 #!/bin/bash
 
+[ ! -d "${HOME}/.config/postman" ] && mkdir -p "${HOME}/.config/postman"
 [ ! -d "./inbox" ] && mkdir -p "./inbox"
 [ ! -d "./sent" ] && mkdir -p "./sent"
 [ ! -d "./draft" ] && mkdir -p "./draft"
 
+
+create_sort_sh() {
+
+echo '# The following two lines demonstrate how to filter incoming mail into'
+echo '# different directories.'
+echo '#[ "$( echo "${subject,,}" | grep "linux fan club" )" ] && dir="linux-fan-club"'
+echo '#[ "$( echo "${from,,}" | grep "max.maier@gmail.com" )" ] && dir="max_maier"'
+
+}
+
+[ ! -f "${HOME}/.config/postman/sort.sh" ] && create_sort_sh > "${HOME}/.config/postman/sort.sh"
+
 sortmail() {
 	dir="inbox"
-	subject="${1}"
-	from="${2}"
-	to="${3}"
-	cc="${4}"
-	maildir="${5}"
-	# The following two lines demonstrate how to filter incoming mail into
-	# different directories.
-	#[ "$( echo "${subject,,}" | grep "linux fan club" )" ] && dir="linux-fan-club"
-	#[ "$( echo "${from,,}" | grep "max.maier@gmail.com" )" ] && dir="max_maier"
+	if [ -f "${HOME}/.config/postman/sort.sh" ]; then
+		. "${HOME}/.config/postman/sort.sh"
+	fi
 	echo "${dir}"
 }
 
@@ -60,7 +67,7 @@ save_mail() {
 	count="${4}"
 	if [ -f "./${directory}/${name}_${count}.eml" ]; then
 		(( count++ ))
-		save_mail "${mail}" "${name}" "${directory}" "${count}" "${ctype}"
+		save_mail "${mail}" "${name}" "${directory}" "${count}"
 	fi
 	mv "${mail}" "./${directory}/${name}_${count}.eml"
 	ln -s "../${directory}/${name}_${count}.eml" "./new/${name}_${count}.eml"
@@ -68,7 +75,6 @@ save_mail() {
 }
 
 num=${RANDOM}${RANDOM}
-num=$(printf "%x" "${num}")
 mail="./inbox/${num}"
 while read line; do
 	echo "${line}" >> "${mail}" || exit 1
