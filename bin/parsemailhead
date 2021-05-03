@@ -1,6 +1,0 @@
-#!/bin/bash
-
-while read line; do
-	[ "${#line}" -le "1" ] && exit 0
-	echo "${line}"
-done
