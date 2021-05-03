@@ -20,22 +20,21 @@ emaila() {
 
 reply() {
 	message=0
-        while read line; do
-		proc="${line,,}"
-		[ "${proc:0:8}"  == "subject:" ] && echo "${line}"
-		if [ "${proc:0:3}"  == "to:" ] && [ ! "${to}" ]; then
+        while IFS= read line; do
+		[ "${line:0:8}"  == "Subject:" ] && echo "${line}"
+		if [ "${line:0:3}"  == "To:" ] && [ ! "${to}" ]; then
 			to="${line:3}"
 			[ ! "${fromTag}" ] && echo "From:${to}"
 			[ "${fromTag}" ] && echo "From:${fromTag}"
 		fi
-		[ "${proc:0:5}"  == "date:" ] && [ ! "${date}" ] && date="${line:5}" && echo -n "Date: " && date -R
-		[ "${proc:0:5}"  == "from:" ] && [ ! "${from}" ] && from="${line:5}" && \
+		[ "${line:0:5}"  == "Date:" ] && [ ! "${date}" ] && date="${line:5}" && echo -n "Date: " && date -R
+		[ "${line:0:5}"  == "From:" ] && [ ! "${from}" ] && from="${line:5}" && \
 			echo -n "To: " && emaila ${from} 
-		[ "${proc:0:3}"  == "cc:" ] && [ ! "${cc}" ] && cc="${line:3}" && \
+		[ "${line:0:3}"  == "Cc:" ] && [ ! "${cc}" ] && cc="${line:3}" && \
 						echo -n "Cc: " && emaila ${cc} 
-		[ "${proc:0:11}"  == "message-id:" ] && [ ! "${mid}" ] && mid="${line:11}" && \
+		[ "${line:0:11}"  == "Message-ID:" ] && [ ! "${mid}" ] && mid="${line:11}" && \
 			echo "In-Reply-To: ${mid}" && \
-			echo "Message-Id: <${RANDOM}-${RANDOM}-${USER}@${HOSTNAME}>"
+			echo "Message-ID: <${RANDOM}-${RANDOM}-${USER}@${HOSTNAME}>"
 		[ "${message}" -eq "0" ] && [ "${#line}" -le "1" ] && message=1 && \
 			echo && echo && echo "On ${date} ${from} wrote:"
 		[ "${message}" -eq "1" ] && echo "> ${line}"
@@ -43,15 +42,19 @@ reply() {
 }
 
 process_head() {
-	while read line; do
-		proc="${line,,}"
-        	last="${#proc}"
-		[ "${proc:0:5}"  == "date:" ] && [ ! "${date}" ] && date="${line:5}"
-        	[ "${proc:0:5}"  == "from:" ] && [ ! "${from}" ] && from="${line:5}"
-        	[ "${proc:0:8}"  == "subject:" ] && [ ! "${subject}" ] && subject="${line:8}"
+	pointer=
+	head=1
+	while IFS= read line; do
+		if [ "${head}" == "1" ]; then
+			[ "${#line}"  -le "1" ] && head=
+			[ "${line:0:5}"  == "Date:" ] && header[0]="${line:5}" && pointer=0
+			[ "${line:0:5}"  == "From:" ] && header[1]="${line:5}" && pointer=1
+			[ "${line:0:8}"  == "Subject:" ] && header[2]="${line:8}" && pointer=2
+			[ "${line:0:1}"  == " " ] && header[${pointer}]="${header[${pointer}]}${line}"
+		fi
 	done
-	echo "::: $( echo ${subject} | sed 's/\r$//' )"
-	echo "$( echo ${from} | sed 's/\r$//' ) ::: $( echo ${date} | sed 's/\r$//' )"
+	echo "::: $( echo ${header[2]} | sed 's/\r$//' )"
+	echo "$( echo ${header[1]} | sed 's/\r$//' ) ::: $( echo ${header[0]} | sed 's/\r$//' )"
 	echo
 }
 
@@ -83,7 +86,7 @@ for file in ${1}/*; do
 			exit 0
 		elif [ "$( basename ${0} )" == "listmail" ] && [ ! -d "${file}" ]; then
 			echo -n "${count} "
-			cat "${file}" | parsemailhead | process_head "${count}"
+			cat "${file}" | process_head "${count}"
 		elif [ -d "${file}" ]; then
 			echo "DIRECTORY: ${file}"
 		fi

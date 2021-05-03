@@ -65,32 +65,47 @@ save_mail() {
 	name="${2}"
 	directory="${3}"
 	count="${4}"
-	if [ -f "./${directory}/${name}_${count}.eml" ]; then
+	if [ -f "./${3}/${2}_${4}.eml" ]; then
 		(( count++ ))
-		save_mail "${mail}" "${name}" "${directory}" "${count}"
+		save_mail "${1}" "${2}" "${3}" "${4}"
 	fi
-	mv "${mail}" "./${directory}/${name}_${count}.eml"
-	ln -s "../${directory}/${name}_${count}.eml" "./new/${name}_${count}.eml"
+	mv "${1}" "./${3}/${2}_${4}.eml"
+	ln -s "../${3}/${2}_${4}.eml" "./new/${2}_${4}.eml"
 	exit 0
 }
 
 num=${RANDOM}${RANDOM}
 mail="./inbox/${num}"
-while read line; do
+pointer=
+head=1
+while IFS= read line; do
 	echo "${line}" >> "${mail}" || exit 1
-	proc="${line,,}"
-	[ "${proc:0:3}"  == "to:" ] && to="${line:3}"
-	[ "${proc:0:3}"  == "cc:" ] && cc="${line:3}"
-	[ "${proc:0:5}"  == "date:" ] && date="${line:5}"
-	[ "${proc:0:5}"  == "from:" ] && from="${line:5}"
-	[ "${proc:0:8}"  == "subject:" ] && subject="${line:8}"
+	if [ "${head}" == "1" ]; then
+		[ "${#line}"  -le "1" ] && head=
+		[ "${line:0:3}"  == "To:" ] && header[0]="${line:3}" && pointer=0
+		[ "${line:0:3}"  == "Cc:" ] && header[1]="${line:3}" && pointer=1
+		[ "${line:0:5}"  == "Date:" ] && header[2]="${line:5}" && pointer=2
+		[ "${line:0:5}"  == "From:" ] && header[3]="${line:5}" && pointer=3
+		[ "${line:0:8}"  == "Sender:" ] && header[4]="${line:7}" && pointer=4
+		[ "${line:0:8}"  == "Subject:" ] && header[5]="${line:8}" && pointer=5
+		[ "${line:0:1}"  == " " ] && header[${pointer}]="${header[${pointer}]}${line}"
+	fi
+
 done
+
+to="${header[0]}"
+cc="${header[1]}"
+date="${header[2]}"
+from="${header[3]}"
+sender="${header[4]}"
+subject="${header[5]}"
+
 maildir="$(basename ${PWD})"
-directory="$(sortmail "${subject}" "${from}" "${to}" "${cc}" "${maildir}")"
+directory="$(sortmail)"
 [ ! -d "./${directory}" ] && mkdir -p "./${directory}"
-date=$( date -d "${date}" +%Y-%m-%dT%H:%M:%S%:z || date +%Y-%m-%dT%H:%M:%S%:z )
-from=$( find_email "${from}" )
-subj=$( tofilen "${subject}" )
+date=$(date -d "${date}" +%Y-%m-%dT%H:%M:%S%:z || date +%Y-%m-%dT%H:%M:%S%:z)
+from=$(find_email "${from}")
+subj=$(tofilen "${subject}")
 name="${date}_${from}_${subj}"
 [ ! -d "./new" ] && mkdir ./new
 count=0
