@@ -1,44 +1,122 @@
 #!/bin/bash
 
-mailfolder="${HOME}/Mail"
-#fromTag='"Max Muster" <maxmuster88@gmail.com>'
+create_config_sh() {
+	echo '# Configuration'
+	echo '# Please provide your email addresses and name.'
+	echo '# Uncomment the following two lines and fill out.'
+	echo '#email="emailaddress@example.com"'
+	echo '#name="Mr So And So"'
+	echo 'mailfolder="${HOME}/Mail"'
+}
+
+
+if [ ! -f "${HOME}/.config/postman/config.sh" ]; then
+	create_config_sh > "${HOME}/.config/postman/config.sh"
+	echo "ERROR: please fill out: ${HOME}/.config/postman/config.sh!"
+	exit 1
+fi
+
+. "${HOME}/.config/postman/config.sh"
+
+[ ! "${mailfolder}" ] && echo "mailfolder= not set in ${HOME}/.config/postman/config.sh!" && exit 1
+[ ! "${email}" ] && echo "email= not set in ${HOME}/.config/postman/config.sh!" && exit 1
+[ ! "${name}" ] && echo "name= not set in ${HOME}/.config/postman/config.sh!" && exit 1
 
 emaila() {
 	all="${@}"
-	begin=0
-	for i in $( seq 1 ${#all} ); do
-		(( ii = i - 1 ))
-		if [ "${all:${ii}:1}" == ">" ]; then
-			[ "${i}" -lt "${#all}" ] && echo ","
-			begin=0
+	ret=
+	for word in ${all}; do
+		if [ "${word/@}" != "${word}" ]; then
+			word="${word//<}"
+			word="${word//>}"
+			word="${word//,}"
+			ret="${ret} ${word}"
 		fi
-		[ "${begin}" -eq "1" ] && echo -n "${all:${ii}:1}"
-		[ "${all:${ii}:1}" == "<" ] && begin=1
+	done
+	echo ${ret}
+}
+
+count_email() {
+	count=0
+	for emailc in ${@}; do
+		[ "${emailc/@}" != "${emailc}" ] && (( count++ ))
+	done
+	echo ${count}
+}
+
+foreach_elm() {
+	size="${#@}"
+	count=0
+	for elm in ${@}; do
+		(( count++ ))
+		echo -n " ${elm}"
+		[ "${size}" != "${count}" ] && echo
 	done
 	echo
 }
 
-reply() {
-	message=0
-        while IFS="\r\n" read line; do
-		[ "${line:0:8}"  == "Subject:" ] && echo "${line}"
-		if [ "${line:0:3}"  == "To:" ] && [ ! "${to}" ]; then
-			to="${line:3}"
-			[ ! "${fromTag}" ] && echo "From:${to}"
-			[ "${fromTag}" ] && echo "From:${fromTag}"
+foreach_email() {
+	size="${#@}"
+	count=0
+	for emailc in ${@}; do
+		(( count++ ))
+		echo -n "${emailc}"
+		[ "${size}" != "${count}" ] && \
+			echo "," && echo -n "    "
+	done
+	echo
+}
+
+head_reply() {
+	if [ "${header[1]}" ]; then
+		cc="$(emaila ${header[1]})"
+		cc="${cc/${email}}"
+		echo -n "Cc: " && foreach_email ${cc}
+	fi
+	if [ "${header[2]/${email}}" != "${header[2]}" ]; then
+		from=" \"${name}\" <${email}>"
+		to="${header[0]}"
+	else
+		count="$(count_email ${header[0]})"
+		if [ "${count}" == "1" ]; then
+			from=" \"${name}\" <${email}>"
+			to="$(emaila ${header[2]})"
+			[ "${header[0]/${email}}" == "${header[0]}" ] && to="${to} $(emaila ${header[0]})"
+		else
+			from=" \"${name}\" <${email}>"
+			to="$(emaila ${header[0]})"
+			to="${to/${email}}"
 		fi
-		[ "${line:0:5}"  == "Date:" ] && [ ! "${date}" ] && date="${line:5}" && echo -n "Date: " && date -R
-		[ "${line:0:5}"  == "From:" ] && [ ! "${from}" ] && from="${line:5}" && \
-			echo -n "To: " && emaila ${from} 
-		[ "${line:0:3}"  == "Cc:" ] && [ ! "${cc}" ] && cc="${line:3}" && \
-						echo -n "Cc: " && emaila ${cc} 
-		[ "${line:0:11}"  == "Message-ID:" ] && [ ! "${mid}" ] && mid="${line:11}" && \
-			echo "In-Reply-To: ${mid}" && \
-			echo "Message-ID: <${RANDOM}-${RANDOM}-${USER}@${HOSTNAME}>"
-		[ "${message}" -eq "0" ] && [ "${#line}" -le "1" ] && message=1 && \
-			echo && echo && echo "On ${date} ${from} wrote:"
-		[ "${message}" -eq "1" ] && echo "> ${line}"
-        done
+	fi
+
+	echo -n "To: " && foreach_email ${to}
+	echo "From:${from}"
+	echo "Message-ID: <${RANDOM}-${RANDOM}-${USER}@${HOSTNAME}>"
+	echo "In-Reply-To:${header[5]}"
+	echo "References:$(foreach_elm ${header[6]} ${header[5]})"
+	echo "Date: $(date -R)"
+	echo "Subject:${header[4]}"
+	echo
+	echo "On${header[3]},${header[2]} wrote:"
+}
+
+reply() {
+	head=1
+	while IFS="\n\r" read line; do
+		[ ! "${head}" ] && echo "> ${line}"
+		if [ "${head}" ]; then
+			[ "${#line}"  -le "1" ] && head_reply && head=
+			[ "${line:0:3}"  == "To:" ] && header[0]="${line:3}" && pointer=0
+			[ "${line:0:3}"  == "Cc:" ] && header[1]="${line:3}" && pointer=1
+			[ "${line:0:5}"  == "From:" ] && header[2]="${line:5}" && pointer=2
+			[ "${line:0:5}"  == "Date:" ] && header[3]="${line:5}" && pointer=3
+			[ "${line:0:8}"  == "Subject:" ] && header[4]="${line:8}" && pointer=4
+			[ "${line:0:11}"  == "Message-ID:" ] && header[5]="${line:11}" && pointer=5
+			[ "${line:0:11}"  == "Message-ID:" ] && header[5]="${line:11}" && pointer=5
+			[ "${line:0:11}"  == "References:" ] && header[6]="${line:11}" && pointer=6
+			[ "${line:0:1}"  == " " ] && header[${pointer}]="${header[${pointer}]}${line}"
+		fi	
+	done
 }
 
 process_head() {

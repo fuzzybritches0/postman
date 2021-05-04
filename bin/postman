@@ -8,12 +8,10 @@
 [ ! "$(which inline-detox)" ] && echo "detox is not installed! Try: apt-get install detox" && exit 1
 
 create_sort_sh() {
-
-echo '# The following two lines demonstrate how to filter incoming mail into'
-echo '# different directories.'
-echo '#[ "$( echo "${subject,,}" | grep "linux fan club" )" ] && dir="linux-fan-club"'
-echo '#[ "$( echo "${from,,}" | grep "max.maier@gmail.com" )" ] && dir="max_maier"'
-
+	echo '# The following two lines demonstrate how to filter incoming mail into'
+	echo '# different directories.'
+	echo '#[ "$( echo "${subject,,}" | grep "linux fan club" )" ] && dir="linux-fan-club"'
+	echo '#[ "$( echo "${from,,}" | grep "max.maier@gmail.com" )" ] && dir="max_maier"'
 }
 
 [ ! -f "${HOME}/.config/postman/sort.sh" ] && create_sort_sh > "${HOME}/.config/postman/sort.sh"
@@ -60,7 +58,7 @@ pointer=
 head=1
 while IFS="\n\r" read line; do
 	echo "${line}" >> "${mail}" || exit 1
-	if [ "${head}" == "1" ]; then
+	if [ "${head}" ]; then
 		[ "${#line}"  -le "1" ] && head=
 		[ "${line:0:3}"  == "To:" ] && header[0]="${line:3}" && pointer=0
 		[ "${line:0:3}"  == "Cc:" ] && header[1]="${line:3}" && pointer=1
