@@ -110,9 +110,10 @@ head_reply() {
 
 reply() {
 	head=1
-	while IFS="\n\r" read line; do
+	while IFS= read line; do
 		[ ! "${head}" ] && echo "> ${line}"
 		if [ "${head}" ]; then
+			[ "${line:0:1}"  != " " ] && pointer=
 			[ "${#line}"  -le "1" ] && head_reply && head=
 			[ "${line:0:3}"  == "To:" ] && header[0]="${line:3}" && pointer=0
 			[ "${line:0:3}"  == "Cc:" ] && header[1]="${line:3}" && pointer=1
@@ -120,9 +121,9 @@ reply() {
 			[ "${line:0:5}"  == "Date:" ] && header[3]="${line:5}" && pointer=3
 			[ "${line:0:8}"  == "Subject:" ] && header[4]="${line:8}" && pointer=4
 			[ "${line:0:11}"  == "Message-ID:" ] && header[5]="${line:11}" && pointer=5
-			[ "${line:0:11}"  == "Message-ID:" ] && header[5]="${line:11}" && pointer=5
 			[ "${line:0:11}"  == "References:" ] && header[6]="${line:11}" && pointer=6
-			[ "${line:0:1}"  == " " ] && header[${pointer}]="${header[${pointer}]}${line}"
+			[ "${line:0:1}"  == " " ] &&\
+				[ "${pointer}" ] && header[${pointer}]="${header[${pointer}]}${line}"
 		fi	
 	done
 }
@@ -130,13 +131,15 @@ reply() {
 process_head() {
 	pointer=
 	head=1
-	while IFS="\r\n" read line; do
-		if [ "${head}" == "1" ]; then
+	while IFS= read line; do
+		if [ "${head}" ]; then
+			[ "${line:0:1}"  != " " ] && pointer=
 			[ "${#line}"  -le "1" ] && head=
 			[ "${line:0:5}"  == "Date:" ] && header[0]="${line:5}" && pointer=0
 			[ "${line:0:5}"  == "From:" ] && header[1]="${line:5}" && pointer=1
 			[ "${line:0:8}"  == "Subject:" ] && header[2]="${line:8}" && pointer=2
-			[ "${line:0:1}"  == " " ] && header[${pointer}]="${header[${pointer}]}${line}"
+			[ "${line:0:1}"  == " " ] &&\
+				[ "${pointer}" ] && header[${pointer}]="${header[${pointer}]}${line}"
 		fi
 	done
 	echo "::: ${header[2]}"
