@@ -175,25 +175,28 @@ fi
 count=0
 for file in ${1}/*; do
 	if [ "${file}" != "${1}/*" ]; then
-		if [ "$( basename ${0} )" == "readmail" ] && [ "${count}" -eq "${2}" ]; then
-			vim -R ${file}
-			exit 0
-		elif [ "$( basename ${0} )" == "rmmail" ] && [ "${count}" -eq "${2}" ]; then
-			rm ${file}
-			exit 0
-		elif [ "$( basename ${0} )" == "replymail" ] && [ "${count}" -eq "${2}" ]; then
-			filere="${file/.eml}_reply.eml"
-			filere="$( basename "${filere}" )"
-			filere="${mailfolder}/draft/${filere}"
-			cat "${file}" | reply > "${filere}"
-			vim "${filere}"
-			sendmail "${filere}"
-			exit 0
-		elif [ "$( basename ${0} )" == "listmail" ] && [ ! -d "${file}" ]; then
+		if [ "$( basename ${0} )" == "listmail" ] && [ ! -d "${file}" ]; then
 			echo -n "${count} "
 			cat "${file}" | process_head "${count}"
 		elif [ -d "${file}" ]; then
 			echo "DIRECTORY: ${file}"
+		fi
+		if [ "${2}" ] && [ "${count}" -eq "${2}" ]; then
+			if [ "$( basename ${0} )" == "readmail" ]; then
+				vim -R ${file}
+				exit 0
+			elif [ "$( basename ${0} )" == "rmmail" ]; then
+				rm "${file}"
+				exit 0
+			elif [ "$( basename ${0} )" == "replymail" ]; then
+				filere="${file/.eml}_reply.eml"
+				filere="$( basename "${filere}" )"
+				filere="${mailfolder}/draft/${filere}"
+				cat "${file}" | reply > "${filere}"
+				vim "${filere}"
+				sendmail "${filere}"
+				exit 0
+			fi
 		fi
 		(( count++ ))
 	fi
