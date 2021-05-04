@@ -1,20 +1,10 @@
 #!/bin/bash
 
-[ ! -d "${HOME}/.config/postman" ] && mkdir -p "${HOME}/.config/postman"
+[ ! "$(which inline-detox)" ] && echo "detox is not installed! Try: apt-get install detox" && exit 1
+
 [ ! -d "./inbox" ] && mkdir -p "./inbox"
 [ ! -d "./sent" ] && mkdir -p "./sent"
 [ ! -d "./draft" ] && mkdir -p "./draft"
-
-[ ! "$(which inline-detox)" ] && echo "detox is not installed! Try: apt-get install detox" && exit 1
-
-create_sort_sh() {
-	echo '# The following two lines demonstrate how to filter incoming mail into'
-	echo '# different directories.'
-	echo '#[ "$( echo "${subject,,}" | grep "linux fan club" )" ] && dir="linux-fan-club"'
-	echo '#[ "$( echo "${from,,}" | grep "max.maier@gmail.com" )" ] && dir="max_maier"'
-}
-
-[ ! -f "${HOME}/.config/postman/sort.sh" ] && create_sort_sh > "${HOME}/.config/postman/sort.sh"
 
 sortmail() {
 	dir="inbox"
@@ -23,7 +13,6 @@ sortmail() {
 	fi
 	echo "${dir}"
 }
-
 
 find_email() {
 	for word in ${1}; do
@@ -39,10 +28,6 @@ find_email() {
 }
 
 save_mail() {
-	mail="${1}"
-	name="${2}"
-	directory="${3}"
-	count="${4}"
 	if [ -f "./${3}/${2}_${4}.eml" ]; then
 		(( count++ ))
 		save_mail "${1}" "${2}" "${3}" "${4}"

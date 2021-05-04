@@ -7,19 +7,16 @@ $ ln -s listmail countmail
 $ ln -s listmail getmail
 $ ln -s listmail readmail
 $ ln -s listmail replymail
-$ ln -s listmail rmmmail
+$ ln -s listmail rmmail
 $ mkdir ~/Mail
 
-Change the line in listmail beginning with 'fromTag=' so it reads your name and
-email address and uncomment it, or you will get surprised when you reply to
-emails with more than one recipient.
+First call listmail. Follow the instructions on the screen.
 
-The executable called postman can be adopted to sort mail into different
-directories. Adopt it to your needs.
+Use the file ${HOME}/.config/postman/sort.sh to sort your mail.
 
-Next install fetchmail and msmtp.
+Next install fetchmail, msmtp, detox.
 
-$ sudo apt install fetchmail msmtp
+$ sudo apt install fetchmail msmtp detox
 
 Next create the file ~/.fetchmailrc with the following content:
 ------------------------------------------
@@ -62,4 +59,11 @@ $ readmail ~/Mail/new NUMBER_OF_MAIL
 
 # reply to mail
 $ replymail ~/Mail/new NUMBER_OF_MAIL
+
+# remove mail
+$ rmmail ~/Mail/inbox NUMBER_OF_MAIL
+
+# flush ~/Mail/new
+$ rm ~/Mail/new/*
+
 

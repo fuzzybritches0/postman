@@ -1,5 +1,12 @@
 #!/bin/bash
 
+create_sort_sh() {
+	echo '# The following two lines demonstrate how to filter incoming mail into'
+	echo '# different directories.'
+	echo '#[ "$( echo "${subject,,}" | grep "linux fan club" )" ] && dir="linux-fan-club"'
+	echo '#[ "$( echo "${from,,}" | grep "max.maier@gmail.com" )" ] && dir="max_maier"'
+}
+
 create_config_sh() {
 	echo '# Configuration'
 	echo '# Please provide your email addresses and name.'
@@ -9,7 +16,8 @@ create_config_sh() {
 	echo 'mailfolder="${HOME}/Mail"'
 }
 
-
+[ ! -d "${HOME}/.config/postman" ] && mkdir -p "${HOME}/.config/postman"
+[ ! -f "${HOME}/.config/postman/sort.sh" ] && create_sort_sh > "${HOME}/.config/postman/sort.sh"
 if [ ! -f "${HOME}/.config/postman/config.sh" ]; then
 	create_config_sh > "${HOME}/.config/postman/config.sh"
 	echo "ERROR: please fill out: ${HOME}/.config/postman/config.sh!"
