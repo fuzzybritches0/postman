@@ -7,6 +7,7 @@ $ ln -s listmail countmail
 $ ln -s listmail getmail
 $ ln -s listmail readmail
 $ ln -s listmail replymail
+$ ln -s listmail newmail
 $ ln -s listmail rmmail
 $ mkdir ~/Mail
 

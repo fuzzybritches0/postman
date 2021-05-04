@@ -58,19 +58,12 @@ while IFS="\n\r" read line; do
 
 done
 
-to="${header[0]}"
-cc="${header[1]}"
-date="${header[2]}"
-from="${header[3]}"
-sender="${header[4]}"
-subject="${header[5]}"
-
 maildir="$(basename ${PWD})"
 directory="$(sortmail)"
 [ ! -d "./${directory}" ] && mkdir -p "./${directory}"
-date=$(date -d "${date}" +%Y-%m-%dT%H:%M:%S%:z || date +%Y-%m-%dT%H:%M:%S%:z)
-from=$(find_email "${from}")
-subj=$(echo "${subject}" | inline-detox)
+date=$(date -d "${header[2]}" +%Y-%m-%dT%H:%M:%S%:z || date +%Y-%m-%dT%H:%M:%S%:z)
+from=$(find_email "${header[3]}")
+subj=$(echo "${header[5]}" | inline-detox)
 name="${date}_${from}_${subj}"
 [ ! -d "./new" ] && mkdir ./new
 count=0

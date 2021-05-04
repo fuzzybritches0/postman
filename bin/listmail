@@ -147,6 +147,22 @@ process_head() {
 	echo
 }
 
+if [ "$(basename ${0})" == "newmail" ]; then
+	date="$(date +%Y-%m-%dT%H:%M:%S%:z)"
+	messageid="${RANDOM}-${RANDOM}-${USER}@${HOSTNAME}"
+	replymail="${mailfolder}/draft/${date}_${email}_${messageid}.eml"
+	echo "Cc: " > "${replymail}"
+	echo "To: " >> "${replymail}"
+	echo "From: ${name} <${email}>" >> "${replymail}"
+	echo "Date: $(date -R)" >> "${replymail}"
+	echo "Message-ID: <${messageid}>" >> "${replymail}"
+	echo "Subject: " >> "${replymail}"
+	echo >> "${replymail}"
+	vim "${replymail}"
+	sendmail "${replymail}"
+	exit 0
+fi
+
 if [ "$( basename ${0} )" == "getmail" ]; then
 	cd "${mailfolder}" && fetchmail -s -K -r Inbox || exit ${?}
 	listmail ./new
