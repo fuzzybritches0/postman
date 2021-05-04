@@ -46,6 +46,9 @@ password YOUR_SECRET_PASSWORD
 account default: THIS_ACCOUNT_NAME
 ------------------------------------------
 
+
+############ USAGE ############
+
 # retrieve mail
 $ getmail
 
