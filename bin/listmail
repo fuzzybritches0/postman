@@ -185,6 +185,11 @@ for file in ${1}/*; do
 			if [ "$( basename ${0} )" == "readmail" ]; then
 				vim -R ${file}
 				exit 0
+			elif [ "$( basename ${0} )" == "mvmail" ]; then
+				[ ! "${3}" ] && echo "provide directory to move to!" && exit 1
+				[ ! -d "${3}" ] && echo "${3} not a directory!" && exit 1
+				mv "${file}" "${3}" || exit ${?}
+				exit 0
 			elif [ "$( basename ${0} )" == "rmmail" ]; then
 				rm "${file}"
 				exit 0
