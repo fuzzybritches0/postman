@@ -17,7 +17,7 @@ Use the file ${HOME}/.config/postman/sort.sh to sort your mail.
 
 Next install fetchmail, msmtp, detox.
 
-$ sudo apt install fetchmail msmtp detox coreutils
+$ sudo apt install fetchmail msmtp detox
 
 Next create the file ~/.fetchmailrc with the following content:
 ------------------------------------------
