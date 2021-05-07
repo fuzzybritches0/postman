@@ -45,12 +45,12 @@ save_mail() {
 num=${RANDOM}${RANDOM}
 mail="./inbox/${num}"
 pointer=
+pause=
 head=1
 while IFS="\n\r" read line; do
-	echo "${line}" >> "${mail}" || exit 1
 	if [ "${head}" ]; then
 		[ "${line:0:1}"  != " " ] && pointer=
-		[ "${#line}"  -le "1" ] && head=
+		[ "${#line}"  -le "1" ] && echo >> "${mail}" && head=
 		[ "${line:0:3}"  == "To:" ] && header[0]="${line:3}" && pointer=0
 		[ "${line:0:3}"  == "Cc:" ] && header[1]="${line:3}" && pointer=1
 		[ "${line:0:5}"  == "Date:" ] && header[2]="${line:5}" && pointer=2
@@ -59,8 +59,14 @@ while IFS="\n\r" read line; do
 		[ "${line:0:8}"  == "Subject:" ] && header[5]="${line:8}" && pointer=5
 		[ "${line:0:1}"  == " " ] &&\
 			[ "${pointer}" ] && header[${pointer}]="${header[${pointer}]}${line}"
+		[ "${line:0:26}"  == "Content-Transfer-Encoding:" ] && encoding="${line:27}" && pause=1
 	fi
-
+	[ "${pause}" ] && pause= && continue
+	if [ ! "${head}" ] && [ "${encoding}" == "base64" ]; then
+		echo "${line}" | base64 -d >> "${mail}" 2> /dev/null
+	else
+		echo "${line}" >> "${mail}" || exit 1
+	fi
 done
 
 maildir="$(basename ${PWD})"
