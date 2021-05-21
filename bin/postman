@@ -75,6 +75,7 @@ directory="$(sortmail)"
 date=$(date -d "${header[2]}" +%Y-%m-%dT%H:%M:%S%:z || date +%Y-%m-%dT%H:%M:%S%:z)
 from=$(find_email "${header[3]}")
 subj=$(echo "${header[5]}" | inline-detox)
+[ "${#subj}" -gt "50" ] && subj="${subj:0:50}"
 name="${date}_${from}_${subj}"
 [ ! -d "./new" ] && mkdir ./new
 count=0
