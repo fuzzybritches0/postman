@@ -94,6 +94,7 @@ head_reply() {
 			from=" \"${name}\" <${email}>"
 			to="$(emaila ${header[0]})"
 			to="${to/${email}}"
+			to="${to} $(emaila ${header[2]})"
 		fi
 	fi
 
