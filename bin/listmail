@@ -118,10 +118,12 @@ reply() {
 			[ "${#line}"  -le "1" ] && head_reply && head=
 			[ "${line:0:3}"  == "To:" ] && header[0]="${line:3}" && pointer=0
 			[ "${line:0:3}"  == "Cc:" ] && header[1]="${line:3}" && pointer=1
+			[ "${line:0:3}"  == "CC:" ] && header[1]="${line:3}" && pointer=1
 			[ "${line:0:5}"  == "From:" ] && header[2]="${line:5}" && pointer=2
 			[ "${line:0:5}"  == "Date:" ] && header[3]="${line:5}" && pointer=3
 			[ "${line:0:8}"  == "Subject:" ] && header[4]="${line:8}" && pointer=4
 			[ "${line:0:11}"  == "Message-ID:" ] && header[5]="${line:11}" && pointer=5
+			[ "${line:0:11}"  == "Message-Id:" ] && header[5]="${line:11}" && pointer=5
 			[ "${line:0:11}"  == "References:" ] && header[6]="${line:11}" && pointer=6
 			[ "${line:0:1}"  == " " ] &&\
 				[ "${pointer}" ] && header[${pointer}]="${header[${pointer}]}${line}"
