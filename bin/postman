@@ -45,7 +45,6 @@ save_mail() {
 num=${RANDOM}${RANDOM}
 mail="./inbox/${num}"
 pointer=
-pause=
 head=1
 while IFS= read -r line; do
 	if [ "${head}" ]; then
@@ -60,14 +59,8 @@ while IFS= read -r line; do
 		[ "${line:0:8}"  == "Subject:" ] && header[5]="${line:8}" && pointer=5
 		[ "${line:0:1}"  == " " ] &&\
 			[ "${pointer}" ] && header[${pointer}]="${header[${pointer}]}${line}"
-		[ "${line:0:26}"  == "Content-Transfer-Encoding:" ] && encoding="${line:27}" && pause=1
 	fi
-	[ "${pause}" ] && pause= && continue
-	if [ ! "${head}" ] && [ "${encoding}" == "base64" ]; then
-		echo "${line}" | base64 -d >> "${mail}" 2> /dev/null
-	else
-		echo "${line}" >> "${mail}" || exit 1
-	fi
+	echo "${line}" >> "${mail}" || exit 1
 done
 
 maildir="$(basename ${PWD})"
