@@ -167,7 +167,7 @@ if [ "$(basename ${0})" == "newmail" ]; then
 fi
 
 if [ "$( basename ${0} )" == "getmail" ]; then
-	cd "${mailfolder}" && fetchmail -s -K -r Inbox || exit ${?}
+	cd "${mailfolder}" && fetchmail --silent --keep --folder Inbox || exit ${?}
 	listmail ./new
 	echo
 	exit 0
